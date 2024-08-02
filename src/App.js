@@ -127,7 +127,7 @@ function App() {
   const calculateDaysBetween = (start, end) => {
     if (!start || !end) return 0;
     const timeDiff = end.getTime() - start.getTime();
-    return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 para incluir el día final
+    return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
   };
 
   const handleSubmit = async (e) => {
@@ -157,6 +157,13 @@ function App() {
       alert(`Error: ${error.response ? error.response.data.details : error.message}`);
     }
     setLoading(false);
+  };
+
+  const formatCanchaName = (cancha, recintoCode) => {
+    if (recintoCode === '855') { // Labranza
+      return cancha.replace("Cancha Tenis", "Cancha de Tenis");
+    }
+    return cancha;
   };
 
   return (
