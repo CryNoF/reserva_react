@@ -128,7 +128,7 @@ function App() {
     setMessage('');
     try {
       console.log('Sending request with data:', { startDate, selectedRecintos, daysToIterate, selectedCanchas, startHour, endHour });
-      const response = await axios.post('https://api-reservas.vercel.app/courts', {
+      const response = await axios.post('https://reserva-node.onrender.com/courts', {
         startDate,
         selectedRecintos,
         daysToIterate,
