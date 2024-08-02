@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const AppContainer = styled.div`
   max-width: 800px;
@@ -25,12 +27,6 @@ const Label = styled.label`
   display: flex;
   flex-direction: column;
   gap: 5px;
-`;
-
-const Input = styled.input`
-  padding: 5px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
 `;
 
 const Select = styled.select`
@@ -84,26 +80,6 @@ const BookingLink = styled.a`
   }
 `;
 
-const ClearButton = styled.button`
-  background-color: #e74c3c;
-  color: white;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  margin-left: 10px;
-
-  &:hover {
-    background-color: #c0392b;
-  }
-`;
-
-const HourRangeContainer = styled.div`
-  display: flex;
-  gap: 10px;
-  align-items: center;
-`;
-
 const Spinner = styled.div`
   border: 4px solid #f3f3f3;
   border-top: 4px solid #3498db;
@@ -126,37 +102,50 @@ const CenterContainer = styled.div`
   height: 200px;
 `;
 
+const StyledDatePicker = styled(DatePicker)`
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 100%;
+`;
+
 const canchas = ["Cancha Tenis 1", "Cancha Tenis 2", "Cancha Tenis 3", "Cancha Tenis 4"];
 const recintos = {
   804: "Germán Becker",
   855: "Labranza"
 };
-const hours = Array.from({length: 13}, (_, i) => i + 8);
 
 function App() {
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
   const [selectedRecintos, setSelectedRecintos] = useState([]);
-  const [daysToIterate, setDaysToIterate] = useState(1);
   const [selectedCanchas, setSelectedCanchas] = useState([]);
-  const [startHour, setStartHour] = useState('');
-  const [endHour, setEndHour] = useState('');
   const [courts, setCourts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
+  const calculateDaysBetween = (start, end) => {
+    if (!start || !end) return 0;
+    const timeDiff = end.getTime() - start.getTime();
+    return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 para incluir el día final
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!startDate || !endDate) {
+      alert('Por favor, seleccione un rango de fechas');
+      return;
+    }
     setLoading(true);
     setMessage('');
     try {
-      console.log('Sending request with data:', { startDate, selectedRecintos, daysToIterate, selectedCanchas, startHour, endHour });
+      const daysToIterate = calculateDaysBetween(startDate, endDate);
+      console.log('Sending request with data:', { startDate, endDate, selectedRecintos, daysToIterate, selectedCanchas });
       const response = await axios.post('https://reserva-node.onrender.com/courts', {
-        startDate,
+        startDate: startDate.toISOString().split('T')[0],
         selectedRecintos,
         daysToIterate,
         selectedCanchas,
-        startHour,
-        endHour
       });
       console.log('Received response:', response.data);
       if (response.data.length === 0) {
@@ -170,20 +159,21 @@ function App() {
     setLoading(false);
   };
 
-  const clearSelection = (setter) => {
-    setter([]);
-  };
-
   return (
     <AppContainer>
       <Title>Búsqueda de Canchas</Title>
       <Form onSubmit={handleSubmit}>
         <Label>
-          Fecha inicial:
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+          Rango de fechas:
+          <StyledDatePicker
+            selectsRange={true}
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(update) => {
+              setDateRange(update);
+            }}
+            isClearable={true}
+            placeholderText="Seleccione rango de fechas"
           />
         </Label>
         <Label>
@@ -197,16 +187,6 @@ function App() {
               <option key={code} value={code}>{name}</option>
             ))}
           </Select>
-          <ClearButton type="button" onClick={() => clearSelection(setSelectedRecintos)}>Limpiar</ClearButton>
-        </Label>
-        <Label>
-          Cantidad de dias a buscar:
-          <Input
-            type="number"
-            min="1"
-            value={daysToIterate}
-            onChange={(e) => setDaysToIterate(parseInt(e.target.value))}
-          />
         </Label>
         <Label>
           Canchas:
@@ -219,7 +199,6 @@ function App() {
               <option key={cancha} value={cancha}>{cancha}</option>
             ))}
           </Select>
-          <ClearButton type="button" onClick={() => clearSelection(setSelectedCanchas)}>Limpiar</ClearButton>
         </Label>
         <Button type="submit">Buscar</Button>
       </Form>
