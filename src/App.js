@@ -226,7 +226,7 @@ function App() {
     try {
       const daysToIterate = calculateDaysBetween(startDate, endDate);
       console.log('Sending request with data:', { startDate, endDate, selectedRecintos, daysToIterate, selectedCanchas });
-      const response = await axios.post('https://reserva-node.onrender.com/courts', {
+      const response = await axios.post('https://reserva-municipal-node.vercel.app/courts', {
         startDate: startDate.toISOString().split('T')[0],
         selectedRecintos,
         daysToIterate,
